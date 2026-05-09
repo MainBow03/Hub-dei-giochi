@@ -84,6 +84,12 @@
                 </h1>
             </div>
             
+            <!-- Contatore Online -->
+            <div class="flex items-center gap-2 bg-slate-800/60 px-4 py-2 rounded-full border border-slate-700 shadow-inner">
+                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+                <span class="text-sm font-medium text-slate-300"><span id="onlineCount">1</span> Online</span>
+            </div>
+            
             <!-- Barra di ricerca -->
             <div class="relative w-full sm:w-72">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -171,6 +177,9 @@
 
     <!-- Modal Votazione -->
     <div id="votingModal" class="fixed inset-0 bg-dark/95 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center p-4">
+        <button id="closeVoteBtn" class="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors focus:outline-none">
+            <i data-lucide="x" class="w-8 h-8"></i>
+        </button>
         <h2 class="text-3xl font-bold text-white mb-2 text-center">Votazione in corso!</h2>
         <p class="text-orange-400 text-4xl font-mono font-bold mb-8 drop-shadow-md" id="voteTimer">00:15</p>
         <div id="voteGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-4xl max-h-[60vh] overflow-y-auto p-2">
@@ -381,30 +390,34 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, deleteDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 
-        // Configurazione Firebase
+        // Configurazione Firebase Ufficiale
         let firebaseConfig;
         try {
             firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         } catch(e) {}
 
         if (!firebaseConfig) {
-            // ATTENZIONE: SOSTITUISCI QUESTA CONFIGURAZIONE CON LA TUA QUANDO ESPORTI SU GITHUB
             firebaseConfig = {
-                apiKey: "LA_TUA_API_KEY",
-                authDomain: "IL_TUO_PROGETTO.firebaseapp.com",
-                projectId: "IL_TUO_PROGETTO",
-                storageBucket: "IL_TUO_PROGETTO.appspot.com",
-                messagingSenderId: "SENDER_ID",
-                appId: "APP_ID"
+                apiKey: "AIzaSyCMreirk7ijjbzbJ1dIfuJ9IkTKGIW7sYM",
+                authDomain: "hub-giochi-simo.firebaseapp.com",
+                projectId: "hub-giochi-simo",
+                storageBucket: "hub-giochi-simo.firebasestorage.app",
+                messagingSenderId: "920363266969",
+                appId: "1:920363266969:web:0db5cda43c94ef4405d908",
+                measurementId: "G-DC1HW2LS8P"
             };
         }
 
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app); // Inizializza le Analytics
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'my-arcade-app';
+        
+        // Uso un appId personalizzato o fallback per il nome della collection
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hub-giochi-simo';
 
         // Elementi DOM Radio
         const radioInputContainer = document.getElementById('radioInputContainer');
@@ -424,6 +437,7 @@
         // --- Elementi DOM Votazione ---
         const startVoteBtn = document.getElementById('startVoteBtn');
         const votingModal = document.getElementById('votingModal');
+        const closeVoteBtn = document.getElementById('closeVoteBtn');
         const voteGrid = document.getElementById('voteGrid');
         const voteTimer = document.getElementById('voteTimer');
         const winnerModal = document.getElementById('winnerModal');
@@ -547,11 +561,20 @@
                 console.error("Errore lettura playlist:", error);
             });
 
-            // --- 2. Ascolta le Votazioni Giochi (Invariato) ---
+            // --- 2. Ascolta le Votazioni Giochi (Aggiornato con funzione chiusura) ---
             const votingRef = doc(db, 'artifacts', appId, 'public', 'data', 'voting', 'state');
             let timerInterval;
             let hasVotedLocally = false;
             let lastProcessedWinnerId = null;
+            let currentVoteEndTime = null;
+            let hasClosedVoteLocally = false;
+
+            // Chiusura manuale della votazione (nasconde solo la UI)
+            closeVoteBtn.addEventListener('click', () => {
+                hasClosedVoteLocally = true;
+                votingModal.classList.add('hidden');
+                votingModal.classList.remove('flex');
+            });
 
             onSnapshot(votingRef, (docSnap) => {
                 const data = docSnap.data();
@@ -559,11 +582,25 @@
 
                 const now = Date.now();
                 if (data.isActive && data.endTime > now) {
-                    votingModal.classList.remove('hidden');
-                    votingModal.classList.add('flex');
+                    
+                    // Rileva l'inizio di un nuovo voto per riattivare la schermata
+                    if (currentVoteEndTime !== data.endTime) {
+                        currentVoteEndTime = data.endTime;
+                        hasClosedVoteLocally = false;
+                        hasVotedLocally = false;
+                    }
+
+                    if (!hasClosedVoteLocally) {
+                        votingModal.classList.remove('hidden');
+                        votingModal.classList.add('flex');
+                    }
+                    
                     winnerModal.classList.add('hidden');
                     winnerModal.classList.remove('flex');
+                    
                     renderVotingGrid(data.votes || {}, hasVotedLocally);
+                    
+                    // Il timer continua a girare anche se la UI è nascosta
                     clearInterval(timerInterval);
                     timerInterval = setInterval(() => {
                         const timeLeft = Math.max(0, Math.floor((data.endTime - Date.now()) / 1000));
@@ -668,6 +705,43 @@
                     });
                 } catch(e) {}
             });
+
+            // --- 3. Tracciamento Giocatori Online ---
+            const user = auth.currentUser;
+            if (user) {
+                const uid = user.uid;
+                const presenceDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'presence', uid);
+                
+                // Aggiorna lo stato ogni 15 secondi (Heartbeat)
+                const updatePresence = () => {
+                    setDoc(presenceDocRef, { lastSeen: Date.now() }).catch(() => {});
+                };
+                updatePresence();
+                setInterval(updatePresence, 15000);
+
+                // Rimuovi dal database quando l'utente chiude la pagina
+                window.addEventListener('beforeunload', () => {
+                    deleteDoc(presenceDocRef).catch(() => {});
+                });
+
+                // Ascolta tutti gli utenti per contarli
+                const presenceCollRef = collection(db, 'artifacts', appId, 'public', 'data', 'presence');
+                onSnapshot(presenceCollRef, (snapshot) => {
+                    const now = Date.now();
+                    let count = 0;
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        // È online se ha aggiornato lo stato negli ultimi 30 secondi
+                        if (now - data.lastSeen < 30000) {
+                            count++;
+                        }
+                    });
+                    const countEl = document.getElementById('onlineCount');
+                    if (countEl) countEl.innerText = count;
+                }, (error) => {
+                    console.error("Errore tracciamento online:", error);
+                });
+            }
         };
 
         function updateRadioUI() {
