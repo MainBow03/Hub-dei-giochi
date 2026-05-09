@@ -43,6 +43,13 @@
             box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.3);
             border-color: #8b5cf6;
         }
+        
+        /* Animazione per il vincitore */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        .bounce-anim { animation: bounce 2s infinite; }
     </style>
 </head>
 <body class="bg-dark text-slate-200 min-h-screen font-sans selection:bg-primary selection:text-white">
@@ -100,6 +107,61 @@
 
     </main>
 
+    <!-- Widget Radio YouTube -->
+    <div id="radioWidget" class="fixed bottom-4 right-4 bg-slate-800/90 backdrop-blur p-4 rounded-xl shadow-2xl border border-slate-700 z-50 w-80 sm:w-96 transition-all duration-300">
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-white font-bold flex items-center gap-2">
+                <i data-lucide="radio" class="text-primary"></i> Arcade Radio
+            </h3>
+            <span id="songCount" class="text-xs font-semibold bg-slate-700 text-slate-300 px-2 py-1 rounded-full">0/5 brani</span>
+        </div>
+        
+        <div id="radioInputContainer" class="flex flex-col gap-2">
+            <input type="text" id="ytUrlInput" placeholder="Incolla URL di YouTube..." class="w-full bg-slate-900 text-white text-sm px-3 py-2 rounded-lg border border-slate-600 focus:outline-none focus:border-primary">
+            <button id="addSongBtn" class="w-full bg-primary hover:bg-purple-600 text-white font-medium text-sm py-2 rounded-lg transition-colors flex justify-center items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i> Aggiungi alla Playlist
+            </button>
+        </div>
+
+        <div id="radioMaxReached" class="hidden text-sm text-emerald-400 font-medium py-2 text-center bg-emerald-400/10 rounded-lg mb-2">
+            ✨ Playlist completata! In loop.
+        </div>
+
+        <button id="playRadioBtn" class="hidden w-full mt-3 bg-slate-700 hover:bg-slate-600 text-white font-medium text-sm py-2 rounded-lg transition-colors flex justify-center items-center gap-2">
+            <i data-lucide="play" class="w-4 h-4"></i> Avvia la Musica
+        </button>
+
+        <!-- Player invisibile YouTube -->
+        <div id="ytplayer" class="hidden"></div>
+    </div>
+
+    <!-- Tasto Avvia Votazione -->
+    <button id="startVoteBtn" class="fixed bottom-4 left-4 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white p-4 rounded-xl shadow-2xl border border-orange-400/50 z-50 flex items-center gap-3 transition-transform hover:scale-105">
+        <i data-lucide="vote" class="w-6 h-6"></i>
+        <span class="font-bold hidden sm:inline">Cosa giochiamo?</span>
+    </button>
+
+    <!-- Modal Votazione -->
+    <div id="votingModal" class="fixed inset-0 bg-dark/95 backdrop-blur-sm z-[100] hidden flex-col items-center justify-center p-4">
+        <h2 class="text-3xl font-bold text-white mb-2 text-center">Votazione in corso!</h2>
+        <p class="text-orange-400 text-4xl font-mono font-bold mb-8 drop-shadow-md" id="voteTimer">00:15</p>
+        <div id="voteGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-4xl max-h-[60vh] overflow-y-auto p-2">
+            <!-- Verrà popolato da JS -->
+        </div>
+        <p class="text-slate-400 mt-6 text-sm text-center">Il gioco più votato si aprirà in automatico per tutti.</p>
+    </div>
+
+    <!-- Modal Vincitore -->
+    <div id="winnerModal" class="fixed inset-0 bg-primary/95 backdrop-blur-md z-[110] hidden flex-col items-center justify-center p-4 text-center">
+        <span id="winnerEmoji" class="text-7xl mb-6 bounce-anim">🏆</span>
+        <h2 class="text-3xl font-extrabold text-white mb-2">Il gioco vincitore è:</h2>
+        <h3 id="winnerName" class="text-5xl sm:text-6xl font-black text-yellow-300 mb-8 drop-shadow-lg">NOME GIOCO</h3>
+        <p id="winnerStatusText" class="text-white text-xl animate-pulse mb-8">Apertura automatica in corso...</p>
+        <a id="manualJoinBtn" href="#" target="_blank" class="px-8 py-4 bg-white text-primary font-bold rounded-full text-xl hover:bg-slate-100 transition-transform hover:scale-105 shadow-xl hidden">
+            Clicca qui per Entrare!
+        </a>
+    </div>
+
     <!-- Footer -->
     <footer class="border-t border-slate-800 mt-auto py-8">
         <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
@@ -119,48 +181,75 @@
         const myGames = [
             {
                 id: 1,
-                title: "Space Shooter Pro",
-                description: "Uno sparatutto spaziale multiplayer. Batti il record dei tuoi amici!",
-                url: "https://tuo-username.github.io/space-shooter", // Sostituisci con il vero link
-                emoji: "🚀",
-                tags: ["Multiplayer", "Firebase", "Azione"],
+                title: "Total Drama",
+                description: "competi contro diversi giocatori nel reality peggiore di sempre! squadre, eliminazioni, immunità, idoli e amicizie tutto qui su a tutto REALITY!",
+                url: "https://mainbow03.github.io/totaldramaaaa/", 
+                emoji: "💰",
+                tags: ["Sopravvivenza", "Multiplayer", "Strategia"],
                 color: "from-blue-500 to-cyan-400"
             },
             {
                 id: 2,
-                title: "Tris Online",
-                description: "Il classico gioco del Tris ma connesso al cloud per sfidare chiunque.",
-                url: "https://tuo-username.github.io/tris-online",
-                emoji: "❌",
-                tags: ["Board Game", "Firestore"],
+                title: "Gioco Dell Oca",
+                description: "una board game tutta particolare che simula il gioco dell oca in varie modalità con diversi personaggi ognuno con un proprio dado!",
+                url: "https://mainbow03.github.io/Gioco-Dell-Oca/",
+                emoji: "🕹️",
+                tags: ["Arcade", "Board Game", "Fortuna"],
                 color: "from-red-500 to-orange-400"
             },
             {
                 id: 3,
-                title: "Chat & Draw",
-                description: "Disegna e indovina in tempo reale con altri giocatori in una stanza condivisa.",
-                url: "https://tuo-username.github.io/chat-draw",
-                emoji: "🎨",
-                tags: ["Multiplayer", "Creativo"],
+                title: "Battaglia di Puzzle",
+                description: "Sfida i tuoi amici in diversi puzzle e battili sul tempo completandoli prima di loro. puoi scegliere sia quale puzzle sia la difficoltà con tanto di sabotaggi!",
+                url: https://mainbow03.github.io/puzzle/",
+                emoji: "🧩",
+                tags: ["Duello", "Sfida", "Logica", "Puzzle"],
                 color: "from-purple-500 to-pink-400"
             },
             {
                 id: 4,
-                title: "Clicker Heroes",
-                description: "Salva i tuoi progressi su Firestore in questo gioco incrementale infinito.",
-                url: "https://tuo-username.github.io/clicker-game",
-                emoji: "🖱️",
-                tags: ["Single Player", "Salvataggio Cloud"],
+                title: "Territory War",
+                description: "Diversi giocatori, unica griglia. a turno lanci il dado e occupi piu spazio possibile. sii colui che alla fine della partita ha conquistato il maggior numero di caselle per vincere!",
+                url: "https://mainbow03.github.io/Territorywar/",
+                emoji: "🌍",
+                tags: ["Fortuna", "Logica", "Competitivo"],
                 color: "from-green-500 to-emerald-400"
             },
-             {
+            {
                 id: 5,
-                title: "Quiz Patente",
-                description: "Sfida i tuoi amici a chi sa più regole stradali. Dati in tempo reale.",
-                url: "#",
-                emoji: "🚗",
-                tags: ["Quiz", "Firebase"],
+                title: "Party Championship",
+                description: "Sfida i tuoi amici in una serie di minigiochi differenti, alla fine di ogni sfida ogni giocatore ottiene un punteggio in base al risultato. concludi tutte le sfide con il maggior numero punti per vincere!",
+                url: "https://mainbow03.github.io/party-giocoscemo/",
+                emoji: "🏆",
+                tags: ["Competitivo", "Fortuna", "Varietà", "Carte", "Grand Prix Style", "Giochi Da Tavolo"],
                 color: "from-yellow-500 to-amber-400"
+            },
+            {
+                id: 6,
+                title: "Torneo Favoriti a squadre",
+                description: "tu e i tuoi amici siete giudici, dovete votare in base alle vostre preferenze su qualsiasi categoria vogliate. il team o il personaggio/oggetto favorito avrà la vittoria",
+                url: "https://mainbow03.github.io/giudici-votazione-torneopotere/",
+                emoji: "️🗳️",
+                tags: ["Votazioni", "Preferenza"],
+                color: "from-indigo-500 to-blue-500"
+            },
+            {
+                id: 7,
+                title: "La Ruota Dei Dingas",
+                description: "Proprio come la ruota di Gerry Scotti, gira la ruota e affronta i tuoi amici in una gara di cultura!",
+                url: "https://mainbow03.github.io/RuotaDeiDingas/",
+                emoji: "🎡",
+                tags: ["Quiz Televisivo"],
+                color: "from-rose-500 to-red-500"
+            },
+            {
+                id: 8,
+                title: "Partyverse",
+                description: "un gioco basato esclusivamente sulla fortuna : lancia i dadi e togli vite ai nemici, passa le bombe o risolvi domande di matematica",
+                url: "https://link-gioco-8.com",
+                emoji: "🎉",
+                tags: ["Fortuna"],
+                color: "from-teal-500 to-green-500"
             }
         ];
 
@@ -247,6 +336,355 @@
             renderGames(filteredGames);
         });
 
+    </script>
+
+    <!-- Caricamento API YouTube -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <!-- Logica della Radio & Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Configurazione Firebase
+        let firebaseConfig;
+        try {
+            // Usa la config automatica se presente
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        } catch(e) {}
+
+        if (!firebaseConfig) {
+            // ATTENZIONE: SOSTITUISCI QUESTA CONFIGURAZIONE CON LA TUA QUANDO ESPORTI SU GITHUB
+            firebaseConfig = {
+                apiKey: "LA_TUA_API_KEY",
+                authDomain: "IL_TUO_PROGETTO.firebaseapp.com",
+                projectId: "IL_TUO_PROGETTO",
+                storageBucket: "IL_TUO_PROGETTO.appspot.com",
+                messagingSenderId: "SENDER_ID",
+                appId: "APP_ID"
+            };
+        }
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'my-arcade-app';
+
+        // Elementi DOM Radio
+        const radioInputContainer = document.getElementById('radioInputContainer');
+        const ytUrlInput = document.getElementById('ytUrlInput');
+        const addSongBtn = document.getElementById('addSongBtn');
+        const songCount = document.getElementById('songCount');
+        const radioMaxReached = document.getElementById('radioMaxReached');
+        const playRadioBtn = document.getElementById('playRadioBtn');
+
+        // --- Elementi DOM Votazione ---
+        const startVoteBtn = document.getElementById('startVoteBtn');
+        const votingModal = document.getElementById('votingModal');
+        const voteGrid = document.getElementById('voteGrid');
+        const voteTimer = document.getElementById('voteTimer');
+        const winnerModal = document.getElementById('winnerModal');
+        const winnerEmoji = document.getElementById('winnerEmoji');
+        const winnerName = document.getElementById('winnerName');
+        const winnerStatusText = document.getElementById('winnerStatusText');
+        const manualJoinBtn = document.getElementById('manualJoinBtn');
+
+        let ytPlayer = null;
+        let currentPlaylist = [];
+        let isPlayerReady = false;
+
+        // Inizializza YouTube Player (la funzione globale chiamata dall'API)
+        window.onYouTubeIframeAPIReady = () => {
+            ytPlayer = new YT.Player('ytplayer', {
+                height: '0',
+                width: '0',
+                playerVars: {
+                    'controls': 0,
+                    'loop': 1,
+                    'playsinline': 1
+                },
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        };
+
+        function onPlayerReady(event) {
+            isPlayerReady = true;
+            if (currentPlaylist.length > 0) {
+                playRadioBtn.classList.remove('hidden');
+                loadPlaylistIntoPlayer();
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            // Se la playlist finisce, ricomincia da capo per il loop
+            if (event.data === YT.PlayerState.ENDED) {
+                ytPlayer.playVideoAt(0);
+            }
+        }
+
+        function loadPlaylistIntoPlayer() {
+            if (isPlayerReady && ytPlayer && currentPlaylist.length > 0) {
+                ytPlayer.loadPlaylist({
+                    playlist: currentPlaylist,
+                    index: 0
+                });
+                ytPlayer.setLoop(true);
+            }
+        }
+
+        // Estrai ID Video da URL YouTube
+        function extractVideoID(url) {
+            const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^#\&\?]*).*/);
+            return (match && match[1].length === 11) ? match[1] : null;
+        }
+
+        // Setup Firestore
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+            
+            // --- 1. Ascolta la Playlist Radio ---
+            const playlistRef = doc(db, 'artifacts', appId, 'public', 'data', 'radio', 'playlist');
+            
+            onSnapshot(playlistRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    currentPlaylist = docSnap.data().songs || [];
+                } else {
+                    currentPlaylist = [];
+                }
+                
+                updateRadioUI();
+                
+                // Aggiorna il player se pronto
+                if (isPlayerReady) {
+                    playRadioBtn.classList.remove('hidden');
+                    loadPlaylistIntoPlayer();
+                }
+            }, (error) => {
+                console.error("Errore lettura playlist:", error);
+            });
+
+            // --- 2. Ascolta le Votazioni Giochi ---
+            const votingRef = doc(db, 'artifacts', appId, 'public', 'data', 'voting', 'state');
+            let timerInterval;
+            let hasVotedLocally = false;
+            let lastProcessedWinnerId = null;
+
+            onSnapshot(votingRef, (docSnap) => {
+                const data = docSnap.data();
+                if (!data) return;
+
+                const now = Date.now();
+                
+                // A. La votazione è attiva e non è scaduta
+                if (data.isActive && data.endTime > now) {
+                    votingModal.classList.remove('hidden');
+                    votingModal.classList.add('flex');
+                    winnerModal.classList.add('hidden');
+                    winnerModal.classList.remove('flex');
+                    
+                    renderVotingGrid(data.votes || {}, hasVotedLocally);
+
+                    // Timer visivo
+                    clearInterval(timerInterval);
+                    timerInterval = setInterval(() => {
+                        const timeLeft = Math.max(0, Math.floor((data.endTime - Date.now()) / 1000));
+                        voteTimer.innerText = `00:${timeLeft.toString().padStart(2, '0')}`;
+                        
+                        if (timeLeft === 0) {
+                            clearInterval(timerInterval);
+                            chiudiVotazioneEProclamaVincitore(data.votes || {});
+                        }
+                    }, 1000);
+                    
+                } 
+                // B. Votazione terminata, c'è un vincitore da mostrare
+                else if (!data.isActive && data.winnerId && data.winnerId !== lastProcessedWinnerId) {
+                    clearInterval(timerInterval);
+                    votingModal.classList.add('hidden');
+                    votingModal.classList.remove('flex');
+                    
+                    hasVotedLocally = false;
+                    lastProcessedWinnerId = data.winnerId;
+                    
+                    mostraVincitore(data.winnerId);
+                } 
+                // C. Stato di riposo
+                else if (!data.isActive) {
+                     clearInterval(timerInterval);
+                     votingModal.classList.add('hidden');
+                     votingModal.classList.remove('flex');
+                     winnerModal.classList.add('hidden');
+                     winnerModal.classList.remove('flex');
+                }
+            });
+
+            // Disegna i bottoni per votare
+            function renderVotingGrid(votesMap, disableButtons) {
+                voteGrid.innerHTML = '';
+                myGames.forEach(game => {
+                    const votes = votesMap[game.id] || 0;
+                    const btn = document.createElement('button');
+                    btn.className = `p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${disableButtons ? 'border-slate-700 bg-slate-800/80 opacity-50 cursor-not-allowed' : 'border-slate-600 bg-slate-800 hover:border-orange-500 hover:bg-slate-700'}`;
+                    btn.innerHTML = `
+                        <span class="text-4xl mb-2">${game.emoji}</span>
+                        <span class="font-bold text-white text-center text-sm">${game.title}</span>
+                        <span class="text-orange-400 font-black text-2xl mt-1">${votes}</span>
+                    `;
+                    
+                    if (!disableButtons) {
+                        btn.onclick = async () => {
+                            hasVotedLocally = true;
+                            renderVotingGrid(votesMap, true); // blocca click successivi
+                            await updateDoc(votingRef, {
+                                [`votes.${game.id}`]: increment(1)
+                            }).catch(() => {});
+                        };
+                    }
+                    voteGrid.appendChild(btn);
+                });
+            }
+
+            // Calcola il vincitore e aggiorna Firestore
+            async function chiudiVotazioneEProclamaVincitore(votesMap) {
+                let winnerId = null;
+                let maxVotes = -1;
+                
+                for (const [gameId, votes] of Object.entries(votesMap)) {
+                    if (votes > maxVotes) {
+                        maxVotes = votes;
+                        winnerId = parseInt(gameId);
+                    }
+                }
+
+                if (winnerId === null && myGames.length > 0) {
+                    winnerId = myGames[0].id; 
+                }
+
+                try {
+                    await updateDoc(votingRef, {
+                        isActive: false,
+                        winnerId: winnerId
+                    });
+                } catch(e) {} // Ignora se un altro client lo ha già aggiornato
+            }
+
+            // Schermata di vittoria e reindirizzamento
+            function mostraVincitore(gameId) {
+                const game = myGames.find(g => g.id === gameId);
+                if (!game) return;
+
+                winnerEmoji.innerText = game.emoji;
+                winnerName.innerText = game.title;
+                manualJoinBtn.href = game.url;
+                
+                winnerStatusText.classList.remove('hidden');
+                manualJoinBtn.classList.add('hidden');
+
+                winnerModal.classList.remove('hidden');
+                winnerModal.classList.add('flex');
+
+                // Tenta l'apertura dopo 3 secondi
+                setTimeout(() => {
+                    try {
+                        const newWindow = window.open(game.url, '_blank');
+                        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                            // Bloccato dal popup blocker del browser
+                            winnerStatusText.classList.add('hidden');
+                            manualJoinBtn.classList.remove('hidden');
+                        } else {
+                            // Riuscito
+                            winnerStatusText.innerText = "Gioco aperto in un'altra scheda!";
+                            setTimeout(() => {
+                                winnerModal.classList.add('hidden');
+                                winnerModal.classList.remove('flex');
+                            }, 4000);
+                        }
+                    } catch (e) {
+                        winnerStatusText.classList.add('hidden');
+                        manualJoinBtn.classList.remove('hidden');
+                    }
+                }, 3000);
+            }
+
+            // Avvio nuova votazione (click sul bottone rosso)
+            startVoteBtn.addEventListener('click', async () => {
+                const durationMs = 15000; // 15 secondi per la votazione
+                const initialVotes = {};
+                myGames.forEach(g => initialVotes[g.id] = 0);
+
+                try {
+                    await setDoc(votingRef, {
+                        isActive: true,
+                        endTime: Date.now() + durationMs,
+                        votes: initialVotes,
+                        winnerId: null
+                    });
+                } catch(e) {
+                    console.error("Errore avvio votazione:", e);
+                }
+            });
+        };
+
+        function updateRadioUI() {
+            songCount.innerText = `${currentPlaylist.length}/5 brani`;
+            
+            if (currentPlaylist.length >= 5) {
+                radioInputContainer.classList.add('hidden');
+                radioMaxReached.classList.remove('hidden');
+            } else {
+                radioInputContainer.classList.remove('hidden');
+                radioMaxReached.classList.add('hidden');
+            }
+            
+            lucide.createIcons();
+        }
+
+        // Aggiungi canzone al DB
+        addSongBtn.addEventListener('click', async () => {
+            const url = ytUrlInput.value.trim();
+            const videoId = extractVideoID(url);
+            
+            if (!videoId) {
+                ytUrlInput.value = '';
+                ytUrlInput.placeholder = "⚠️ Link non valido!";
+                setTimeout(() => ytUrlInput.placeholder = "Incolla URL di YouTube...", 2000);
+                return;
+            }
+            
+            if (currentPlaylist.length >= 5) return;
+            
+            const newPlaylist = [...currentPlaylist, videoId];
+            const playlistRef = doc(db, 'artifacts', appId, 'public', 'data', 'radio', 'playlist');
+            
+            try {
+                await setDoc(playlistRef, { songs: newPlaylist });
+                ytUrlInput.value = ''; // Resetta input
+            } catch (error) {
+                console.error("Errore salvataggio:", error);
+            }
+        });
+
+        // Pulsante per avviare la musica
+        playRadioBtn.addEventListener('click', () => {
+            if (ytPlayer && isPlayerReady) {
+                ytPlayer.playVideo();
+                playRadioBtn.innerHTML = '<i data-lucide="volume-2" class="w-4 h-4"></i> Radio in riproduzione';
+                playRadioBtn.classList.remove('hover:bg-slate-600', 'bg-slate-700');
+                playRadioBtn.classList.add('bg-green-600', 'hover:bg-green-500');
+                lucide.createIcons();
+            }
+        });
+
+        // Avvia!
+        initAuth();
     </script>
 </body>
 </html>
