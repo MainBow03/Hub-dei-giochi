@@ -659,7 +659,11 @@
                     votingModal.classList.remove('flex');
                     hasVotedLocally = false;
                     lastProcessedWinnerId = data.winnerId;
-                    mostraVincitore(data.winnerId);
+                    
+                    // FIX: Mostra il popup solo se la votazione è terminata da meno di 30 secondi (30000 ms)
+                    if (now - data.endTime < 30000) {
+                        mostraVincitore(data.winnerId);
+                    }
                 } else if (!data.isActive) {
                      clearInterval(timerInterval);
                      votingModal.classList.add('hidden');
