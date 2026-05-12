@@ -332,6 +332,15 @@
                 emoji: "⚔️",
                 tags: ["RPG", "Strategia", "Sopravvivenza"],
                 color: "from-red-500 to-rose-400"
+            },
+            {
+                id: 10,
+                title: "Multimon",
+                description: "Combatti in lotte stile RPG con i personaggi delle tue serie preferite! Partecipa a diverse modalità competitive come il Torneo o affronta l'avvincente Modalità Campagna.",
+                url: "https://mainbow03.github.io/Multimon/",
+                emoji: "🐉",
+                tags: ["RPG", "Combattimento", "Torneo", "Anime"],
+                color: "from-fuchsia-500 to-purple-500"
             }
         ];
 
@@ -451,9 +460,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         
-        import("https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js")
-            .then(({ getAnalytics }) => getAnalytics(app))
-            .catch(() => console.log("Analytics bloccato (es. da AdBlock). Il sito funzionerà lo stesso!"));
+        // Inizializzazione Analytics rimossa per evitare l'errore 404 "App not found"
+        // che si verifica quando la configurazione di Firebase non ha Analytics abilitato
         
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'hub-giochi-simo';
 
